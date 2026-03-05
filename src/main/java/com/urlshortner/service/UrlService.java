@@ -1,0 +1,67 @@
+package com.urlshortner.service;
+
+import com.urlshortner.repository.UrlRepository;
+import com.urlshortner.util.EncodeUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class UrlService {
+
+    private final UrlRepository repository;
+    private final AtomicLong counter = new AtomicLong(1000);
+
+    // this method shorten the user given url
+    public String shortenUrl(String url){
+
+
+        String existing = repository.getCode(url);
+
+        if(existing != null){
+            return existing;
+        }
+
+        long id = counter.incrementAndGet();
+        String code = EncodeUtil.encode(id);
+        repository.save(url,code);
+
+        return code;
+    }
+
+    // this method gives original url from provided shorten url
+    public String getOriginalUrl(String code){
+        String url = repository.getUrl(code);
+
+        return url;
+    }
+
+    // this method gives top domain names which was shortened highly
+    public Map<String, Long> getTopDomains() {
+        Map<String, Long> domainCount = repository.getAllUrls().keySet().stream()
+                .map(this::extractDomain)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        return domainCount.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(3)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    // this method gives domain names extracted from input URL
+    private String extractDomain(String url){
+        try{
+            URI uri = new URI(url);
+            return uri.getHost().replace("www.","");
+        }
+        catch(Exception e){
+            return "unknown";
+        }
+    }
+}
