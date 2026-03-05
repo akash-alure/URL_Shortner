@@ -1,8 +1,10 @@
 package com.urlshortner.service;
 
+import com.urlshortner.exception.UrlNotFoundException;
 import com.urlshortner.repository.UrlRepository;
 import com.urlshortner.util.EncodeUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UrlService {
 
     private final UrlRepository repository;
@@ -20,11 +23,12 @@ public class UrlService {
 
     // this method shorten the user given url
     public String shortenUrl(String url){
-
+        log.info("Received URL to shorten: {}",url);
 
         String existing = repository.getCode(url);
 
         if(existing != null){
+            log.info("URL already shortened: {}",existing);
             return existing;
         }
 
@@ -32,12 +36,20 @@ public class UrlService {
         String code = EncodeUtil.encode(id);
         repository.save(url,code);
 
+        log.info("Generated short code {} for URL {}",code,url);
+
         return code;
     }
 
     // this method gives original url from provided shorten url
     public String getOriginalUrl(String code){
         String url = repository.getUrl(code);
+
+        if(url == null){
+            throw new UrlNotFoundException("Short URL not found");
+        }
+
+        log.info("Redirecting code {} to {}",code,url);
 
         return url;
     }
