@@ -1,5 +1,6 @@
 package com.urlshortner.service;
 
+import com.urlshortner.exception.DomainBlacklistedException;
 import com.urlshortner.exception.UrlNotFoundException;
 import com.urlshortner.repository.UrlRepository;
 import com.urlshortner.util.EncodeUtil;
@@ -22,8 +23,13 @@ public class UrlService {
     private final AtomicLong counter = new AtomicLong(1000);
 
     // this method shorten the user given url
-    public String shortenUrl(String url){
+    public String shortenUrl(String url) throws DomainBlacklistedException {
+
         log.info("Received URL to shorten: {}",url);
+        String domainName = extractDomain(url);
+        if(repository.getBlackListedDomains().contains(domainName)){
+            throw new DomainBlacklistedException("Domain "+domainName+" is black listed!");
+        }
 
         String existing = repository.getCode(url);
 
@@ -39,6 +45,15 @@ public class UrlService {
         log.info("Generated short code {} for URL {}",code,url);
 
         return code;
+    }
+
+    public String blackListURL(String url){
+        String msgResponse = "Domain "+ url +" is blacklisted!";
+
+        if(!repository.addToBlackList(url)){
+            msgResponse = "Failed to add domain blacklisted!";
+        }
+        return msgResponse;
     }
 
     // this method gives original url from provided shorten url

@@ -1,5 +1,6 @@
 package com.urlshortner;
 
+import com.urlshortner.exception.DomainBlacklistedException;
 import com.urlshortner.exception.UrlNotFoundException;
 import com.urlshortner.repository.UrlRepository;
 import com.urlshortner.service.UrlService;
@@ -23,7 +24,7 @@ class UrlShortnerApplicationTests {
     }
 
     @Test
-    void sameUrlShouldReturnSameShortCode() {
+    void sameUrlShouldReturnSameShortCode() throws DomainBlacklistedException {
         String url = "https://youtube.com/test";
         String code1 = service.shortenUrl(url);
         String code2 = service.shortenUrl(url);
@@ -32,7 +33,7 @@ class UrlShortnerApplicationTests {
     }
 
     @Test
-    void shouldReturnOriginalUrl() {
+    void shouldReturnOriginalUrl() throws DomainBlacklistedException {
         String url = "https://google.com";
         String code = service.shortenUrl(url);
         String result = service.getOriginalUrl(code);
@@ -47,7 +48,7 @@ class UrlShortnerApplicationTests {
     }
 
     @Test
-    void shouldReturnTopDomains() {
+    void shouldReturnTopDomains() throws DomainBlacklistedException {
         service.shortenUrl("https://youtube.com/a");
         service.shortenUrl("https://youtube.com/b");
         service.shortenUrl("https://google.com");

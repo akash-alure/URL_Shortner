@@ -1,8 +1,10 @@
 package com.urlshortner.controller;
 
+import com.urlshortner.exception.DomainBlacklistedException;
 import com.urlshortner.service.UrlService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -14,11 +16,19 @@ public class UrlController {
 
     private final UrlService urlService;
 
+    @Value("${server.port}")
+    private String port;
+
     // this api shorten the provided url
     @PostMapping("/shorten")
-    public String shorten(@RequestParam String url) {
+    public String shorten(@RequestParam String url) throws DomainBlacklistedException {
         String code = urlService.shortenUrl(url);
-        return "http://localhost:8080/" + code;
+        return "http://localhost:"+port+"/" + code;
+    }
+
+    @PostMapping("/blacklist")
+    public String blacklistDomain(@RequestParam String url) {
+        return urlService.blackListURL(url);
     }
 
     // this api gives original url parallel to provided shorted url
